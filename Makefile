@@ -2,10 +2,14 @@ VERSION=3.0.2
 
 CC=gcc
 CFLAGS=-Wall -Wno-pointer-sign -g $(CLCFLAGS) -DGSEAL_ENABLE
+CXX=g++
+CXXFLAGS=-Wall -g $(CLCFLAGS)
 INSTALL=install
 PKGCONFIG=pkg-config
 XML2CONFIG=xml2-config
 XSLCONFIG=xslt-config
+QMAKE=qmake
+MOC=moc
 
 # these locations seem to work for SuSE and Fedora
 # prefix = $(HOME)
@@ -96,6 +100,16 @@ endif
 # about it if it doesn't.
 LIBUSB = $(shell $(PKGCONFIG) --libs libusb-1.0 2> /dev/null)
 
+# Use qmake to find out which Qt version we are building for.
+QT_VERSION_MAJOR = $(shell $(QMAKE) -query QT_VERSION | cut -d. -f1)
+ifeq ($(QT_VERSION_MAJOR), 5)
+	QT_MODULES = Qt5Widgets
+else
+	QT_MODULES = QtGui
+endif
+LIBQT = $(shell $(PKGCONFIG) --libs $(QT_MODULES))
+QTCXXFLAGS = $(shell $(PKGCONFIG) --cflags $(QT_MODULES))
+
 LIBGTK = $(shell $(PKGCONFIG) --libs gtk+-2.0 glib-2.0)
 LIBDIVECOMPUTERCFLAGS = $(LIBDIVECOMPUTERINCLUDES)
 LIBDIVECOMPUTER = $(LIBDIVECOMPUTERARCHIVE) $(LIBUSB)
@@ -157,14 +171,14 @@ ifneq ($(strip $(LIBXSLT)),)
 	XSLT=-DXSLT='"$(XSLTDIR)"'
 endif
 
-LIBS = $(LIBXML2) $(LIBXSLT) $(LIBSQLITE3) $(LIBGTK) $(LIBGCONF2) $(LIBDIVECOMPUTER) $(EXTRALIBS) $(LIBZIP) -lpthread -lm $(LIBOSMGPSMAP) $(LIBSOUP) $(LIBWINSOCK)
+LIBS = $(LIBXML2) $(LIBXSLT) $(LIBSQLITE3) $(LIBQT) $(LIBGCONF2) $(LIBDIVECOMPUTER) $(EXTRALIBS) $(LIBZIP) -lpthread -lm $(LIBOSMGPSMAP) $(LIBSOUP) $(LIBWINSOCK)
 
 MSGLANGS=$(notdir $(wildcard po/*.po))
 MSGOBJS=$(addprefix share/locale/,$(MSGLANGS:.po=.UTF-8/LC_MESSAGES/subsurface.mo))
 
 OBJS =	main.o dive.o time.o profile.o info.o equipment.o divelist.o deco.o planner.o \
 	parse-xml.o save-xml.o libdivecomputer.o print.o uemis.o uemis-downloader.o \
-	gtk-gui.o statistics.o file.o cochran.o device.o download-dialog.o prefs.o \
+	qt-gui.o statistics.o file.o cochran.o device.o download-dialog.o prefs.o \
 	webservice.o sha1.o $(GPSOBJ) $(OSSUPPORT).o $(RESFILE)
 
 DEPS = $(wildcard .dep/*.dep)
@@ -270,7 +284,7 @@ update-po-files:
 	tx push -s
 	tx pull -af
 
-EXTRA_FLAGS =	$(GTKCFLAGS) $(GLIB2CFLAGS) $(XML2CFLAGS) \
+EXTRA_FLAGS =	$(QTCXXFLAGS) $(GTKCFLAGS) $(GLIB2CFLAGS) $(XML2CFLAGS) \
 		$(XSLT) $(ZIP) $(SQLITE3) $(LIBDIVECOMPUTERCFLAGS) \
 		$(LIBSOUPCFLAGS) $(OSMGPSMAPFLAGS) $(GCONF2CFLAGS)
 
@@ -278,6 +292,11 @@ EXTRA_FLAGS =	$(GTKCFLAGS) $(GLIB2CFLAGS) $(XML2CFLAGS) \
 	@echo '    CC' $<
 	@mkdir -p .dep
 	@$(CC) $(CFLAGS) $(EXTRA_FLAGS) -MD -MF .dep/$@.dep -c -o $@ $<
+
+%.o: %.cpp
+	@echo '    CXX' $<
+	@mkdir -p .dep
+	@$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) -MD -MF .dep/$@.dep -c -o $@ $<
 
 share/locale/%.UTF-8/LC_MESSAGES/subsurface.mo: po/%.po po/%.aliases
 	mkdir -p $(dir $@)
