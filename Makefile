@@ -149,7 +149,6 @@ ifneq (,$(filter $(UNAME),linux kfreebsd gnu))
 	OSSUPPORT_CFLAGS = $(GTKCFLAGS) $(GCONF2CFLAGS)
 	ifneq ($(findstring reduce_relocations, $(shell $(PKGCONFIG) --variable qt_config $(QT_CORE))),)
 		CXXFLAGS += -fPIE
-		LDFLAGS += -pie
 	endif
 else ifeq ($(UNAME), darwin)
 	OSSUPPORT = macos
