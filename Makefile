@@ -10,6 +10,7 @@ XML2CONFIG=xml2-config
 XSLCONFIG=xslt-config
 QMAKE=qmake
 MOC=moc
+UIC=uic
 
 # these locations seem to work for SuSE and Fedora
 # prefix = $(HOME)
@@ -187,7 +188,7 @@ DEPS = $(wildcard .dep/*.dep)
 all: $(NAME)
 
 $(NAME): gen_version_file $(OBJS) $(MSGOBJS) $(INFOPLIST)
-	$(CC) $(LDFLAGS) -o $(NAME) $(OBJS) $(LIBS)
+	$(CXX) $(LDFLAGS) -o $(NAME) $(OBJS) $(LIBS)
 
 gen_version_file:
 ifneq ($(STORED_VERSION_STRING),$(VERSION_STRING))
@@ -288,6 +289,8 @@ EXTRA_FLAGS =	$(QTCXXFLAGS) $(GTKCFLAGS) $(GLIB2CFLAGS) $(XML2CFLAGS) \
 		$(XSLT) $(ZIP) $(SQLITE3) $(LIBDIVECOMPUTERCFLAGS) \
 		$(LIBSOUPCFLAGS) $(OSMGPSMAPFLAGS) $(GCONF2CFLAGS)
 
+MOCFLAGS = $(filter -I%, $(CXXFLAGS) $(EXTRA_FLAGS)) $(filter -D%, $(CXXFLAGS) $(EXTRA_FLAGS))
+
 %.o: %.c
 	@echo '    CC' $<
 	@mkdir -p .dep
@@ -297,6 +300,23 @@ EXTRA_FLAGS =	$(QTCXXFLAGS) $(GTKCFLAGS) $(GLIB2CFLAGS) $(XML2CFLAGS) \
 	@echo '    CXX' $<
 	@mkdir -p .dep
 	@$(CXX) $(CXXFLAGS) $(EXTRA_FLAGS) -MD -MF .dep/$@.dep -c -o $@ $<
+
+%.moc.cpp: %.h
+	@echo '    MOC' $<
+	@$(MOC) $(MOCFLAGS) $< -o $@
+
+# This rule is for running the moc on QOBject subclasses defined in the .cpp files;
+# remember to #include "<file>.moc.cpp" at the end of the .cpp file, or you'll
+# get linker errors ("undefined vtable for...")
+%.moc.cpp: %.cpp
+	@echo '    MOC' $<
+	@$(MOC) -i $(MOCFLAGS) $< -o $@
+
+qt-gui.o: main-window.ui.h qt-gui.moc.cpp
+
+%.ui.h: ui/%.ui
+	@echo '    UIC' $<
+	@$(UIC) $< -o $@
 
 share/locale/%.UTF-8/LC_MESSAGES/subsurface.mo: po/%.po po/%.aliases
 	mkdir -p $(dir $@)

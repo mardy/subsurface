@@ -24,14 +24,54 @@
 #include "webservice.h"
 #include "version.h"
 #include "libdivecomputer.h"
+#include "main-window.ui.h"
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 #include <QApplication>
+#include <QTranslator>
 
 #if HAVE_OSM_GPS_MAP
 #include <osm-gps-map-source.h>
 #endif
+
+class Translator: public QTranslator
+{
+	Q_OBJECT
+
+public:
+	Translator(QObject *parent = 0);
+	~Translator() {}
+
+	virtual QString	translate(const char *context, const char *sourceText,
+	                          const char *disambiguation = 0) const;
+};
+
+Translator::Translator(QObject *parent):
+	QTranslator(parent)
+{
+}
+
+QString Translator::translate(const char *context, const char *sourceText,
+                              const char *disambiguation) const
+{
+	return QString::fromUtf8(gettext(sourceText));
+}
+
+class MainWindow: public QMainWindow, private Ui::MainWindow
+{
+	Q_OBJECT
+
+public:
+	MainWindow(QWidget *parent = 0);
+	~MainWindow() {}
+};
+
+MainWindow::MainWindow(QWidget *parent):
+	QMainWindow(parent)
+{
+	setupUi(this);
+}
 
 static const GdkPixdata subsurface_icon_pixbuf = {};
 
@@ -41,7 +81,7 @@ GtkWidget *error_info_bar;
 GtkWidget *error_label;
 GtkWidget *vpane, *hpane;
 GtkWidget *notebook;
-static QApplication *application;
+static QApplication *application = 0;
 
 int        error_count;
 const char *existing_filename;
@@ -1721,6 +1761,11 @@ void init_ui(int *argcp, char ***argvp)
 	GtkSettings *settings;
 	GtkUIManager *ui_manager;
 
+	application = new QApplication(*argcp, *argvp);
+	application->installTranslator(new Translator(application));
+	MainWindow *window = new MainWindow();
+	window->show();
+
 	gtk_init(argcp, argvp);
 	settings = gtk_settings_get_default();
 	gtk_settings_set_long_property(settings, "gtk-tooltip-timeout", 10, "subsurface setting");
@@ -2366,3 +2411,5 @@ gdouble get_screen_dpi(void)
 	gdouble dpi_h = floor((h / h_mm) * mm_per_inch);
 	return dpi_h;
 }
+
+#include "qt-gui.moc.cpp"
