@@ -105,8 +105,10 @@ LIBUSB = $(shell $(PKGCONFIG) --libs libusb-1.0 2> /dev/null)
 QT_VERSION_MAJOR = $(shell $(QMAKE) -query QT_VERSION | cut -d. -f1)
 ifeq ($(QT_VERSION_MAJOR), 5)
 	QT_MODULES = Qt5Widgets
+	QT_CORE = Qt5Core
 else
 	QT_MODULES = QtGui
+	QT_CORE = QtCore
 endif
 LIBQT = $(shell $(PKGCONFIG) --libs $(QT_MODULES))
 QTCXXFLAGS = $(shell $(PKGCONFIG) --cflags $(QT_MODULES))
@@ -145,6 +147,10 @@ ifneq (,$(filter $(UNAME),linux kfreebsd gnu))
 	GCONF2CFLAGS =  $(shell $(PKGCONFIG) --cflags gconf-2.0)
 	OSSUPPORT = linux
 	OSSUPPORT_CFLAGS = $(GTKCFLAGS) $(GCONF2CFLAGS)
+	ifneq ($(findstring reduce_relocations, $(shell $(PKGCONFIG) --variable qt_config $(QT_CORE))),)
+		CXXFLAGS += -fPIE
+		LDFLAGS += -pie
+	endif
 else ifeq ($(UNAME), darwin)
 	OSSUPPORT = macos
 	OSSUPPORT_CFLAGS = $(GTKCFLAGS)
