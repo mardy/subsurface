@@ -58,21 +58,6 @@ QString Translator::translate(const char *context, const char *sourceText,
 	return QString::fromUtf8(gettext(sourceText));
 }
 
-class MainWindow: public QMainWindow, private Ui::MainWindow
-{
-	Q_OBJECT
-
-public:
-	MainWindow(QWidget *parent = 0);
-	~MainWindow() {}
-};
-
-MainWindow::MainWindow(QWidget *parent):
-	QMainWindow(parent)
-{
-	setupUi(this);
-}
-
 static const GdkPixdata subsurface_icon_pixbuf = {};
 
 GtkWidget *main_window;
@@ -1746,6 +1731,28 @@ static gboolean notebook_tooltip (GtkWidget *widget, gint x, gint y,
 	} else {
 		return FALSE;
 	}
+}
+
+class MainWindow: public QMainWindow, private Ui::MainWindow
+{
+	Q_OBJECT
+
+public:
+	MainWindow(QWidget *parent = 0);
+	~MainWindow() {}
+
+private Q_SLOTS:
+	void on_actionNew_triggered() { file_close(NULL, NULL); }
+	void on_actionOpen_triggered() { file_open(NULL, NULL); }
+	void on_actionSave_triggered() { file_save(NULL, NULL); }
+	void on_actionSaveAs_triggered() { file_save_as(NULL, NULL); }
+	void on_actionClose_triggered() { file_close(NULL, NULL); }
+};
+
+MainWindow::MainWindow(QWidget *parent):
+	QMainWindow(parent)
+{
+	setupUi(this);
 }
 
 void init_ui(int *argcp, char ***argvp)
