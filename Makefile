@@ -310,7 +310,7 @@ MOCFLAGS = $(filter -I%, $(CXXFLAGS) $(EXTRA_FLAGS)) $(filter -D%, $(CXXFLAGS) $
 	@echo '    MOC' $<
 	@$(MOC) $(MOCFLAGS) $< -o $@
 
-# This rule is for running the moc on QOBject subclasses defined in the .cpp files;
+# This rule is for running the moc on QObject subclasses defined in the .cpp files;
 # remember to #include "<file>.moc.cpp" at the end of the .cpp file, or you'll
 # get linker errors ("undefined vtable for...")
 %.moc.cpp: %.cpp
