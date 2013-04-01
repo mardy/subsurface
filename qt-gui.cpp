@@ -29,6 +29,9 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk-pixbuf/gdk-pixdata.h>
 #include <QApplication>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QStringList>
 #include <QTranslator>
 
 #if HAVE_OSM_GPS_MAP
@@ -1743,16 +1746,63 @@ public:
 
 private Q_SLOTS:
 	void on_actionNew_triggered() { file_close(NULL, NULL); }
-	void on_actionOpen_triggered() { file_open(NULL, NULL); }
+	void on_actionOpen_triggered();
 	void on_actionSave_triggered() { file_save(NULL, NULL); }
 	void on_actionSaveAs_triggered() { file_save_as(NULL, NULL); }
 	void on_actionClose_triggered() { file_close(NULL, NULL); }
+
+private:
+    QStringList fileNameFilters() const;
 };
 
 MainWindow::MainWindow(QWidget *parent):
 	QMainWindow(parent)
 {
 	setupUi(this);
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+	QString currentFileName = QString::fromUtf8(prefs.default_filename);
+	QFileInfo fileInfo(currentFileName);
+
+	QFileDialog dialog(this, tr("Open File"), fileInfo.path());
+	dialog.setFileMode(QFileDialog::ExistingFile);
+	dialog.selectFile(currentFileName);
+	dialog.setNameFilters(fileNameFilters());
+	if (dialog.exec()) {
+		/* first, close the existing file, if any, and forget its name */
+		file_close(NULL, NULL);
+		free((void *)existing_filename);
+		existing_filename = NULL;
+
+		/* we know there is only one filename */
+		QString fileName = dialog.selectedFiles().first();
+		GError *error = NULL;
+		parse_file(fileName.toUtf8().constData(), &error, TRUE);
+		if (error != NULL)
+		{
+			report_error(error);
+			g_error_free(error);
+			error = NULL;
+		}
+		report_dives(FALSE, FALSE);
+	}
+}
+
+QStringList MainWindow::fileNameFilters() const
+{
+    QStringList filters;
+
+    filters << "*.xml *.uddf *.udcf *.jlb"
+#ifdef LIBZIP
+        " *.sde *.dld"
+#endif
+#ifdef SQLITE3
+        " *.db"
+#endif
+        ;
+    return filters;
 }
 
 void init_ui(int *argcp, char ***argvp)
