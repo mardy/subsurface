@@ -8,7 +8,9 @@
 #include <gdk/gdkkeysyms-compat.h>
 #endif
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 extern GtkWidget *main_window;
 
@@ -119,6 +121,8 @@ GError *uemis_download(const char *path, progressbar_t *progress, GtkDialog *dia
 /* from planner.c */
 extern void input_plan(void);
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #endif

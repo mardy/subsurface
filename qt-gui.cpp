@@ -44,7 +44,7 @@ public:
 	~Translator() {}
 
 	virtual QString	translate(const char *context, const char *sourceText,
-	                          const char *disambiguation = 0) const;
+	                          const char *disambiguation = NULL) const;
 };
 
 Translator::Translator(QObject *parent):
@@ -81,7 +81,7 @@ GtkWidget *error_info_bar;
 GtkWidget *error_label;
 GtkWidget *vpane, *hpane;
 GtkWidget *notebook;
-static QApplication *application = 0;
+static QApplication *application = NULL;
 
 int        error_count;
 const char *existing_filename;

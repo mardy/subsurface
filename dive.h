@@ -15,7 +15,9 @@
 
 #include "sha1.h"
 
-G_BEGIN_DECLS
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define O2_IN_AIR		209     // permille
 #define N2_IN_AIR		781
@@ -702,7 +704,9 @@ extern char *debugfilename;
 extern FILE *debugfile;
 #endif
 
-G_END_DECLS
+#ifdef __cplusplus
+}
+#endif
 
 #include "pref.h"
 
